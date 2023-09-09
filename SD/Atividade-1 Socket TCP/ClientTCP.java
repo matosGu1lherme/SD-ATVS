@@ -64,6 +64,12 @@ public class ClientTCP {
                     out.writeUTF("GETDIRS");
                     System.out.println(in.readUTF());
                 }
+
+                 if (bufferCmd[0].equals("EXIT")) {
+                    out.writeUTF("EXIT");
+                    System.out.println(in.readUTF());
+                    System.exit(0);
+                }
             }
 
         } catch (IOException e) {

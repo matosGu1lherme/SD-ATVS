@@ -105,12 +105,9 @@ class ClientThread extends Thread {
                 }
 
                 if (bufferCmd[0].equals("CHDIR")) {
-                    String path = buffer.replaceFirst("CHDIR", "");
-                    System.out.println(this.dir);
-                    String path2 = "E:/Cacic/CACIC";
+                    String path = buffer.replaceFirst("CHDIR ", "");
                     this.dir = new File(path);
-                    System.out.println(this.dir);
-                    out.writeUTF("SUCCESS" + this.dir.toString());
+                    out.writeUTF("SUCCESS:" + this.dir.toString());
                 }
 
                 if (bufferCmd[0].equals("GETFILES")) {
@@ -138,6 +135,17 @@ class ClientThread extends Thread {
                         }
                     }
                     out.writeUTF(dataReturn);
+                }
+
+                if (bufferCmd[0].equals("EXIT")) {
+                    try {
+                        out.writeUTF("CLOSE");
+                        in.close();
+                        out.close();
+                        clientSocket.close();
+                    } catch (IOException ioe) {
+                        System.err.println("IOE: " + ioe);
+                    }
                 }
             }
         } catch (IOException e) {
