@@ -1,21 +1,13 @@
-import java.io.File;
-import java.util.Scanner;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 public class teste {
-    public static void main (String args[]) {
-        Scanner reader = new Scanner(System.in);
-        try {
+    public static void main(String args[]) {
+        int num = 22072; // int precisa de 4 bytes, ordem padrão ByteOrder.BIG_ENDIAN
+        byte[] result = ByteBuffer.allocate(4).putInt(num).array();
+        
+        int number = ByteBuffer.wrap(result).getInt();
 
-            String path = reader.nextLine();
-            File dir = new File("E:/UTFPR/SD\\Atividade-1 Socket TCP");
-            dir = new File(path);
-            File[] arquivos = dir.listFiles();
-    
-            for (File arquivo : arquivos) {
-                if (arquivo.isFile()) System.out.println(arquivo.getName());
-            }
-        } catch (NullPointerException e) {
-            System.out.println(e);
-        }
+        System.out.println(number);
     }
 }
