@@ -6,13 +6,13 @@ import java.io.*;
 public class Client1 {
  
     public static void main(String[] args) {
-        System.out.println("Iniciando Cliente-1");
+        System.out.println("Iniciando Cliente-1 \uD83D\uDE02");
         DatagramSocket dgramSocket = null;
         try {
             dgramSocket = new DatagramSocket(6666);
 
             ReciveThread r = new ReciveThread(dgramSocket);
-            SendThread s = new SendThread(dgramSocket, 6661);
+            SendThread s = new SendThread(dgramSocket, "Marcelo");
             r.start();
             s.start();
 
@@ -44,7 +44,23 @@ class ReciveThread extends Thread {
                 byte[] mensageType = new byte[4];
                 System.arraycopy(dgramPacket.getData(), 0, mensageType, 0, 4);
                 int mtype = ByteBuffer.wrap(mensageType).getInt();
-                System.out.println(mtype);
+
+                byte[] nick_sz = new byte[4];
+                System.arraycopy(dgramPacket.getData(), 4, nick_sz, 0, 4);
+                int nick_sz_int = ByteBuffer.wrap(nick_sz).getInt();
+
+                byte[] nick_bytes = new byte[nick_sz_int];
+                System.arraycopy(dgramPacket.getData(), 8, nick_bytes, 0, nick_sz_int);
+                String nick_name = new String(nick_bytes, "UTF-8");
+
+                byte[] msg_sz_bytes = new byte[4];
+                System.arraycopy(dgramPacket.getData(), 72, msg_sz_bytes, 0, 4);
+                int msg_sz_int = ByteBuffer.wrap(msg_sz_bytes).getInt();
+
+                byte[] msg_bytes = new byte[msg_sz_int];
+                System.arraycopy(dgramPacket.getData(), 76, msg_bytes, 0, msg_sz_int);
+                String msg = new String(msg_bytes, "UTF-8");
+                System.out.println(nick_name + ": " + msg);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -60,13 +76,13 @@ class SendThread extends Thread {
 
     DatagramSocket dgramSocket;
     InetAddress serverAddr;
-    int serverPort;
+    String nick_user;
     
-    public SendThread(DatagramSocket dgramSocket, int serverPort) {
+    public SendThread(DatagramSocket dgramSocket, String nick_user) {
         try {
             this.dgramSocket = dgramSocket;
             serverAddr = InetAddress.getByName("127.0.0.1");
-            serverPort = serverPort;
+            this.nick_user = nick_user;
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -78,13 +94,13 @@ class SendThread extends Thread {
         Scanner reader = new Scanner(System.in);
         while (true) {
             try {
-                System.out.println("Cliente-1:");
+                System.out.println("Voce:");
     
                 String buffer = reader.nextLine();
     
-                byte[] mensagem = create_mensage("Sergio", buffer);
+                byte[] mensagem = create_mensage(this.nick_user , buffer);
     
-                DatagramPacket request = new DatagramPacket(mensagem, mensagem.length, serverAddr, serverPort);
+                DatagramPacket request = new DatagramPacket(mensagem, mensagem.length, serverAddr, 6661);
                 dgramSocket.send(request);
             } catch (IOException e) {
                 e.printStackTrace();
