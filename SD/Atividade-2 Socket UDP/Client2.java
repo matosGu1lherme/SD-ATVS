@@ -60,7 +60,6 @@ class ReciveThread extends Thread {
                 byte[] msg_bytes = new byte[msg_sz_int];
                 System.arraycopy(dgramPacket.getData(), 76, msg_bytes, 0, msg_sz_int);
                 String msg = new String(msg_bytes, "UTF-8");
-                System.out.println(msg);
                 System.out.println(nick_name + ": " + msg);
 
 
