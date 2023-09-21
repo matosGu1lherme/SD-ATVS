@@ -95,63 +95,7 @@ class ClientThread extends Thread {
                 }
             }
 
-            byte[] bufferdelete = new byte[cabecalhoSize];
-            in.readFully(bufferdelete);
-
-            System.arraycopy(bufferdelete, 0, comandIdt, 0, 4);
-            comando = ByteBuffer.wrap(comandIdt).getInt();
-
-            if (comando == 2) {
-                // Criar um objeto File para representar o arquivo a ser excluído
-                String absolutePath = new File("").getAbsolutePath();
-                File arquivo = new File(absolutePath + "/addFile/" + nomeFile + "." + tipo);
-
-                // Tentar excluir o arquivo usando o método delete()
-                boolean resultado = arquivo.delete();
-
-                System.out.println("IMPRIMINDO DIRETORIO");;
-                // Verificar o resultado e mostrar uma mensagem apropriada
-                if (resultado) {
-                    System.out.println("Arquivo excluido com sucesso.");
-                } else {
-                    System.out.println("Falha ao excluir o arquivo.");
-                }
-            }
-
-            byte[] bufferList = new byte[cabecalhoSize];
-            in.readFully(bufferList);
-
-            System.arraycopy(bufferList, 0, comandIdt, 0, 4);
-            comando = ByteBuffer.wrap(comandIdt).getInt();
-
-            if (comando == 3) {
-                String absPath = new File("").getAbsolutePath();
-
-                File dir = new File(absPath + "/addFile");
-                File[] arquivos = dir.listFiles();
-
-                int contador = 1;
-                for (File arq : arquivos) {
-                    System.out.println(contador + " - " +arq.getName());
-                }
-            }
-
-            byte[] bufferDownload = new byte[cabecalhoSize];
-            in.readFully(bufferDownload);
-            System.arraycopy(bufferDownload, 0, comandIdt, 0, 4);
-            comando = ByteBuffer.wrap(comandIdt).getInt();
             
-            if (comando == 4) {
-                System.out.println("Chegou");
-                String absPath = new File("").getAbsolutePath();
-                String filePath = absPath + "/addFile/image.png"; // Colocando o caminho até a imagem 
-                byte[] data = Files.readAllBytes(Paths.get(filePath));
-
-                byte[] sizeDownload = ByteBuffer.allocate(4).putInt(data.length).array();
-                out.write(sizeDownload);
-
-                out.write(data);
-            }
         } catch (IOException e) {
                 System.out.println(e.getMessage());
         }
