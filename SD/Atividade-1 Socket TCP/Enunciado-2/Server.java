@@ -58,46 +58,58 @@ class ClientThread extends Thread {
     public void run() {
         int cabecalhoSize = 264;
 
-        
         try {
-            byte[] comandIdt = new byte[4];
-            byte[] fileSize = new byte[4];
-            byte[] nome = new byte[256];
-            byte[] buffer = new byte[cabecalhoSize];
-            in.readFully(buffer);
+            
+            while (true) {
+                byte[] Solicitacao = new byte[272];
+                in.readFully(Solicitacao);
+        
+                byte[] comand_bytes = new byte[4];
+                System.arraycopy(Solicitacao, 0, comand_bytes, 0, 4);
+                int comando = ByteBuffer.wrap(comand_bytes).getInt();
+                
+          
+                if (comando == 1) { 
+                    System.out.println("oi");
 
-            System.arraycopy(buffer, 0, comandIdt, 0, 4);
-            System.arraycopy(buffer, 4, fileSize, 0, 4);
-            System.arraycopy(buffer, 8, nome, 0, 256);
+                    byte[] fileSize_byte = new byte[4];
+                    System.arraycopy(Solicitacao, 268, fileSize_byte, 0, 4);
+                    int fileSize = ByteBuffer.wrap(fileSize_byte).getInt();
+                    System.out.println(fileSize);
+                    // byte[] arq = new byte[sz];
+                    // in.readFully(arq); 
+                    // File arquivo = new File("addFile/"+nomeFile + "." + tipo);
+        
+                    // if (!arquivo.exists()) {
+                    //     FileOutputStream fos = new FileOutputStream(arquivo); // cria um fluxo de saída para o arquivo
+                    //     fos.write(Arrays.copyOfRange(arq, 0, arq.length)); // escreve os bytes no arquivo
+                    //     fos.close(); // fecha o fluxo
+                    // } else {
+                    //     System.out.println("O arquivo já existe!"); // imprime uma mensagem de erro
+                    // }
 
-
-            int comando = ByteBuffer.wrap(comandIdt).getInt();
-            int sz = ByteBuffer.wrap(fileSize).getInt();
-            String str = new String(nome, StandardCharsets.UTF_8);
-
-            String nomeFile = str.substring(0, str.indexOf(".")-1);
-            String tipo = str.substring(str.indexOf(".")+1, str.indexOf(".")+4);
-
-            byte[] comand = ByteBuffer.allocate(4).putInt(200).array();
-            out.write(comand);
-
-            if (comando == 1) { 
-                byte[] arq = new byte[sz];
-                in.readFully(arq); 
-                File arquivo = new File("addFile/"+nomeFile + "." + tipo);
-
-                if (!arquivo.exists()) {
-                    FileOutputStream fos = new FileOutputStream(arquivo); // cria um fluxo de saída para o arquivo
-                    fos.write(Arrays.copyOfRange(arq, 0, arq.length)); // escreve os bytes no arquivo
-                    fos.close(); // fecha o fluxo
-                } else {
-                    System.out.println("O arquivo já existe!"); // imprime uma mensagem de erro
+                    out.write(CreateResposta(1, 12, 200));
                 }
             }
+        } catch(IOException e) {
+            System.out.println(e.getMessage());
+        }     
+    }
 
-            
-        } catch (IOException e) {
-                System.out.println(e.getMessage());
-        }
+
+    public static byte[] CreateResposta(int mensageType, int comandIdt, int status) {
+
+        byte[] resposta = new byte[12];
+
+        byte[] msgT_bytes = ByteBuffer.allocate(4).putInt(mensageType).array();
+        System.arraycopy(msgT_bytes, 0, resposta, 0, 4);
+
+        byte[] comand_bytes = ByteBuffer.allocate(4).putInt(comandIdt).array();
+        System.arraycopy(comand_bytes, 0, resposta, 4, 4);
+
+        byte[] status_bytes = ByteBuffer.allocate(4).putInt(status).array();
+        System.arraycopy(status_bytes, 0, resposta, 8, 4);
+
+        return resposta;
     }
 }
