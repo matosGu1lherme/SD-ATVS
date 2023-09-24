@@ -1,11 +1,13 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Cliente {
@@ -79,7 +81,7 @@ public class Cliente {
 
                 if (buffer_comands[0].equals("GETFILESLIST")) {
 
-                    byte[] solicitacao = CreateSolicitacao(3, 2, "nada", 0);
+                    byte[] solicitacao = CreateSolicitacao(3, 2, "any", 0);
                     System.out.println(solicitacao.length);
                     out.write(solicitacao);
 
@@ -94,6 +96,32 @@ public class Cliente {
                     String lista_arquivos = new String(lista_arquivos_byte, "UTF-8");
                     
                     System.out.println(lista_arquivos);
+                }
+
+                if (buffer_comands[0].equals("GETFILE")) {
+
+                    byte[] solicitacao = CreateSolicitacao(4, 2, buffer_comands[1], 0);
+                    System.out.println(solicitacao.length);
+                    out.write(solicitacao);
+
+                    byte[] resposta = new byte[12];
+                    in.read(resposta);
+                    byte[] size_byte = new byte[4];
+                    System.arraycopy(resposta, 4, size_byte, 0, 4);
+                    int size = ByteBuffer.wrap(size_byte).getInt();
+
+                    byte[] arq = new byte[size];
+                    in.readFully(arq); 
+                    File arquivo = new File("pasta-cliente/" + buffer_comands[1]);
+        
+                    if (!arquivo.exists()) {
+                        FileOutputStream fos = new FileOutputStream(arquivo); // cria um fluxo de saída para o arquivo
+                        fos.write(Arrays.copyOfRange(arq, 0, arq.length)); // escreve os bytes no arquivo
+                        fos.close(); // fecha o fluxo
+                    } else {
+                        System.out.println("O arquivo já existe!"); // imprime uma mensagem de erro
+                    }
+
                 }
             }
 

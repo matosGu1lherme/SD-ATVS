@@ -140,6 +140,26 @@ class ClientThread extends Thread {
                     
                     out.write(arquivos_list.getBytes());
                 }
+
+                if(comando == 4) {
+                    String absPath = new File("").getAbsolutePath();
+
+                    byte[] nameSz_byte = new byte[4];
+                    System.arraycopy(Solicitacao, 8, nameSz_byte, 0, 4);
+                    int nameSz = ByteBuffer.wrap(nameSz_byte).getInt();
+
+                    byte[] nameArq_byte = new byte[nameSz];
+                    System.arraycopy(Solicitacao, 12, nameArq_byte, 0, nameSz);
+                    String nameArq = new String(nameArq_byte, "UTF-8");
+                    System.out.println(nameArq);
+
+                    File file = new File(absPath + "/pasta-servidor/" + nameArq);
+                    byte[] file_bytes = Files.readAllBytes(file.toPath());
+
+                    out.write(CreateResposta(1, file_bytes.length, 400));
+
+                    out.write(file_bytes);
+                }
             }
         } catch(IOException e) {
             System.out.println(e.getMessage());
