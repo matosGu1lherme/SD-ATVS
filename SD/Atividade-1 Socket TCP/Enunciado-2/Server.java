@@ -56,12 +56,13 @@ class ClientThread extends Thread {
     //Executa ao Rodar c.run()
     @Override
     public void run() {
-        int cabecalhoSize = 264;
+        int cabecalhoSize = 272;
 
         try {
             
             while (true) {
-                byte[] Solicitacao = new byte[272];
+                byte[] Solicitacao = new byte[cabecalhoSize];
+                System.out.println("Escutando: ");
                 in.readFully(Solicitacao);
         
                 byte[] comand_bytes = new byte[4];
@@ -76,19 +77,68 @@ class ClientThread extends Thread {
                     System.arraycopy(Solicitacao, 268, fileSize_byte, 0, 4);
                     int fileSize = ByteBuffer.wrap(fileSize_byte).getInt();
                     System.out.println(fileSize);
-                    // byte[] arq = new byte[sz];
-                    // in.readFully(arq); 
-                    // File arquivo = new File("addFile/"+nomeFile + "." + tipo);
-        
-                    // if (!arquivo.exists()) {
-                    //     FileOutputStream fos = new FileOutputStream(arquivo); // cria um fluxo de saída para o arquivo
-                    //     fos.write(Arrays.copyOfRange(arq, 0, arq.length)); // escreve os bytes no arquivo
-                    //     fos.close(); // fecha o fluxo
-                    // } else {
-                    //     System.out.println("O arquivo já existe!"); // imprime uma mensagem de erro
-                    // }
 
+                    byte[] nameSz_byte = new byte[4];
+                    System.arraycopy(Solicitacao, 8, nameSz_byte, 0, 4);
+                    int nameSz = ByteBuffer.wrap(nameSz_byte).getInt();
+
+                    byte[] nameArq_byte = new byte[nameSz];
+                    System.arraycopy(Solicitacao, 12, nameArq_byte, 0, nameSz);
+                    String nameArq = new String(nameArq_byte, "UTF-8");
+                    
                     out.write(CreateResposta(1, 12, 200));
+                    
+                    byte[] arq = new byte[fileSize];
+                    in.readFully(arq); 
+                    File arquivo = new File("pasta-servidor/" + nameArq);
+        
+                    if (!arquivo.exists()) {
+                        FileOutputStream fos = new FileOutputStream(arquivo); // cria um fluxo de saída para o arquivo
+                        fos.write(Arrays.copyOfRange(arq, 0, arq.length)); // escreve os bytes no arquivo
+                        fos.close(); // fecha o fluxo
+                        out.write(CreateResposta(1, 12, 200));
+                    } else {
+                        System.out.println("O arquivo já existe!"); // imprime uma mensagem de erro
+                        out.write(CreateResposta(1, 12, 400));
+                    }
+                }
+
+                if(comando == 2) {
+                    String absPath = new File("").getAbsolutePath();
+
+                    byte[] nameSz_byte = new byte[4];
+                    System.arraycopy(Solicitacao, 8, nameSz_byte, 0, 4);
+                    int nameSz = ByteBuffer.wrap(nameSz_byte).getInt();
+
+                    byte[] nameArq_byte = new byte[nameSz];
+                    System.arraycopy(Solicitacao, 12, nameArq_byte, 0, nameSz);
+                    String nameArq = new String(nameArq_byte, "UTF-8");
+                    
+                    File file = new File(absPath + "/pasta-servidor/" + nameArq);
+                    boolean resultDelete = file.delete();
+
+                    if(resultDelete) {
+                        out.write(CreateResposta(1, 12, 200));
+                    }else {
+                        out.write(CreateResposta(1, 12, 400));
+                    }
+                }
+
+                if(comando == 3) {
+                    String absPath = new File("").getAbsolutePath();
+
+                    File file = new File(absPath + "/pasta-servidor/");
+                    File[] arquivos = file.listFiles();
+
+                    String arquivos_list = "";
+                    int count = 1;
+                    for (File arquivo : arquivos) {
+                        arquivos_list = arquivos_list + count + " - " + arquivo.getName() + "\n";
+                    }
+
+                    out.write(CreateResposta(1, arquivos_list.length(), 400));
+                    
+                    out.write(arquivos_list.getBytes());
                 }
             }
         } catch(IOException e) {
@@ -112,4 +162,6 @@ class ClientThread extends Thread {
 
         return resposta;
     }
+
+
 }

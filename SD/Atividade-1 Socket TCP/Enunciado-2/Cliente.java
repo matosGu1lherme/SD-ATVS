@@ -29,10 +29,11 @@ public class Cliente {
 
                 if (buffer_comands[0].equals("ADDFILE")) {
                     
-                    File file = new File("E:/UTFPR/SD-ATVS/SD/Atividade-1 Socket TCP/Enunciado-2/pasta-cliente/amendoim.txt");
+                    String absPath = new File("").getAbsolutePath();
+                    File file = new File(absPath + "/pasta-cliente/" + buffer_comands[1]);
                     byte[] arquivo_bytes = Files.readAllBytes(file.toPath());
 
-                    byte[] solicitacao = CreateSolicitacao(1, 2, "ovo.png", arquivo_bytes.length);
+                    byte[] solicitacao = CreateSolicitacao(1, 2, buffer_comands[1], arquivo_bytes.length);
                     System.out.println(solicitacao.length);
                     out.write(solicitacao);
 
@@ -42,17 +43,57 @@ public class Cliente {
                     byte[] status_byte =  new byte[4];
                     System.arraycopy(resposta, 8, status_byte, 0, 4);
                     int status = ByteBuffer.wrap(status_byte).getInt();
-                    System.out.println(status);
+                    System.out.println("STATUS: " + status);
 
                     if (status == 200) {
                         System.out.println("Enviando Arquivo");
-
-
-
                         out.write(arquivo_bytes);
+                        System.out.println("Enviado...");
+
+                        in.read(resposta);
+                        System.arraycopy(resposta, 8, status_byte, 0, 4);
+                        status = ByteBuffer.wrap(status_byte).getInt();
+                        System.out.println("STATUS: " + status);
+
+                        if (status == 200) {
+                            System.out.println("Arquivo Adicionado ao Servidor");
+                        }
                     }else {
                         System.out.println("Erro ao enviar cabeçalho");
                     }
+                }
+
+                if (buffer_comands[0].equals("DELETE")) {
+
+                    byte[] solicitacao = CreateSolicitacao(2, 2, buffer_comands[1], 0);
+                    System.out.println(solicitacao.length);
+                    out.write(solicitacao);
+
+                    byte[] resposta = new byte[12];
+                    in.read(resposta);
+                    byte[] status_byte = new byte[4];
+                    System.arraycopy(resposta, 8, status_byte, 0, 4);
+                    int status = ByteBuffer.wrap(status_byte).getInt();
+                    System.out.println("STATUS: " + status);
+                }
+
+                if (buffer_comands[0].equals("GETFILESLIST")) {
+
+                    byte[] solicitacao = CreateSolicitacao(3, 2, "nada", 0);
+                    System.out.println(solicitacao.length);
+                    out.write(solicitacao);
+
+                    byte[] resposta = new byte[12];
+                    in.read(resposta);
+                    byte[] size_byte = new byte[4];
+                    System.arraycopy(resposta, 4, size_byte, 0, 4);
+                    int size = ByteBuffer.wrap(size_byte).getInt();
+                    
+                    byte[] lista_arquivos_byte = new byte[size];
+                    in.read(lista_arquivos_byte);
+                    String lista_arquivos = new String(lista_arquivos_byte, "UTF-8");
+                    
+                    System.out.println(lista_arquivos);
                 }
             }
 
