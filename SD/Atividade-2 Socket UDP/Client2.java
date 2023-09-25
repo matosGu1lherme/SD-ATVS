@@ -27,9 +27,15 @@ public class Client2 {
 class ReciveThread extends Thread {
 
     DatagramSocket dgramSocket;
+    InetAddress serverAddr;
 
     public ReciveThread(DatagramSocket dgramSocket) {
         this.dgramSocket = dgramSocket;
+        try {
+            serverAddr = InetAddress.getByName("127.0.0.1");
+        }catch(UnknownHostException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
@@ -45,28 +51,41 @@ class ReciveThread extends Thread {
                 System.arraycopy(dgramPacket.getData(), 0, mensageType, 0, 4);
                 int mtype = ByteBuffer.wrap(mensageType).getInt();
 
-                byte[] nick_sz = new byte[4];
-                System.arraycopy(dgramPacket.getData(), 4, nick_sz, 0, 4);
-                int nick_sz_int = ByteBuffer.wrap(nick_sz).getInt();
-
-                byte[] nick_bytes = new byte[nick_sz_int];
-                System.arraycopy(dgramPacket.getData(), 8, nick_bytes, 0, nick_sz_int);
-                String nick_name = new String(nick_bytes, "UTF-8");
-
-                byte[] msg_sz_bytes = new byte[4];
-                System.arraycopy(dgramPacket.getData(), 72, msg_sz_bytes, 0, 4);
-                int msg_sz_int = ByteBuffer.wrap(msg_sz_bytes).getInt();
-
-                byte[] msg_bytes = new byte[msg_sz_int];
-                System.arraycopy(dgramPacket.getData(), 76, msg_bytes, 0, msg_sz_int);
-                String msg = new String(msg_bytes, "UTF-8");
-                System.out.println(nick_name + ": " + msg);
+                if(mtype == 2) {
+                    byte[] response = SendThread.create_mensage(2, "STATUS", "200 ACTIVE");
+                    DatagramPacket request = new DatagramPacket(response, response.length, serverAddr, 6666);
+                    dgramSocket.send(request);
+                }else {
+    
+                    byte[] nick_sz = new byte[4];
+                    System.arraycopy(dgramPacket.getData(), 4, nick_sz, 0, 4);
+                    int nick_sz_int = ByteBuffer.wrap(nick_sz).getInt();
+    
+                    byte[] nick_bytes = new byte[nick_sz_int];
+                    System.arraycopy(dgramPacket.getData(), 8, nick_bytes, 0, nick_sz_int);
+                    String nick_name = new String(nick_bytes, "UTF-8");
+    
+                    byte[] msg_sz_bytes = new byte[4];
+                    System.arraycopy(dgramPacket.getData(), 72, msg_sz_bytes, 0, 4);
+                    int msg_sz_int = ByteBuffer.wrap(msg_sz_bytes).getInt();
+    
+                    byte[] msg_bytes = new byte[msg_sz_int];
+                    System.arraycopy(dgramPacket.getData(), 76, msg_bytes, 0, msg_sz_int);
+                    String msg = new String(msg_bytes, "UTF-8");
+                    System.out.println(nick_name + ": " + msg);
+                }
 
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static byte[] EchoMensage() {
+        byte[] response = new byte[4];
+        response = ByteBuffer.allocate(4).putInt(200).array();
+        return response;
     }
 }
 
@@ -98,18 +117,24 @@ class SendThread extends Thread {
                 System.out.println("Voce:");
     
                 String buffer = reader.nextLine();
-    
-                byte[] mensagem = create_mensage(this.nick_user, buffer);
-    
+
+                byte[] mensagem;
+                if(buffer.equals("ECHO")) {
+                    mensagem = create_mensage(2, this.nick_user, buffer);
+                } else {
+                    mensagem = create_mensage(1, this.nick_user, buffer);
+                }
+
                 DatagramPacket request = new DatagramPacket(mensagem, mensagem.length, serverAddr, 6666);
                 dgramSocket.send(request);
+    
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public static byte[] create_mensage(String nome, String msg) {
+    public static byte[] create_mensage(int msgType, String nome, String msg) {
 
         byte[] cacalho = new byte[331];
 
@@ -125,7 +150,7 @@ class SendThread extends Thread {
             return cacalho;
         }
 
-        byte[] tipo_mensagem = ByteBuffer.allocate(4).putInt(1).array();
+        byte[] tipo_mensagem = ByteBuffer.allocate(4).putInt(msgType).array();
         byte[] nick_size = ByteBuffer.allocate(4).putInt(nick.length).array();
         byte[] mensagem_size = ByteBuffer.allocate(4).putInt(mensagem.length).array();
 
