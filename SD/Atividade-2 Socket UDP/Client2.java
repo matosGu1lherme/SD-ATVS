@@ -9,10 +9,10 @@ public class Client2 {
         System.out.println("Iniciando Cliente-2");
         DatagramSocket dgramSocket = null;
         try {
-            dgramSocket = new DatagramSocket(6661);
+            dgramSocket = new DatagramSocket(6663);
 
-            ReciveThread r = new ReciveThread(dgramSocket);
-            SendThread s = new SendThread(dgramSocket, "Douglas");
+            ReciveThread r = new ReciveThread(dgramSocket, "Maicon");
+            SendThread s = new SendThread(dgramSocket, "Maicon");
             r.start();
             s.start();
 
@@ -26,10 +26,11 @@ public class Client2 {
 
 class ReciveThread extends Thread {
 
+    String nick_def;
     DatagramSocket dgramSocket;
     InetAddress serverAddr;
 
-    public ReciveThread(DatagramSocket dgramSocket) {
+    public ReciveThread(DatagramSocket dgramSocket, String nickName_def) {
         this.dgramSocket = dgramSocket;
         try {
             serverAddr = InetAddress.getByName("127.0.0.1");
@@ -46,15 +47,26 @@ class ReciveThread extends Thread {
                 byte[] buffer = new byte[1000];
                 DatagramPacket dgramPacket = new DatagramPacket(buffer, buffer.length);
                 dgramSocket.receive(dgramPacket);
-                
+
                 byte[] mensageType = new byte[4];
                 System.arraycopy(dgramPacket.getData(), 0, mensageType, 0, 4);
                 int mtype = ByteBuffer.wrap(mensageType).getInt();
 
                 if(mtype == 2) {
-                    byte[] response = SendThread.create_mensage(2, "STATUS", "200 ACTIVE");
-                    DatagramPacket request = new DatagramPacket(response, response.length, serverAddr, 6666);
+                    System.out.println("ECHO RECEBIDO");
+                    byte[] response = SendThread.create_mensage(3, "STATUS", "200 ACTIVE");
+                    DatagramPacket request = new DatagramPacket(response, response.length, serverAddr, 6664);
                     dgramSocket.send(request);
+                }else if(mtype == 3) {
+                    byte[] nick_sz = new byte[4];
+                    System.arraycopy(dgramPacket.getData(), 4, nick_sz, 0, 4);
+                    int nick_sz_int = ByteBuffer.wrap(nick_sz).getInt();
+    
+                    byte[] nick_bytes = new byte[nick_sz_int];
+                    System.arraycopy(dgramPacket.getData(), 8, nick_bytes, 0, nick_sz_int);
+                    String nick_name = new String(nick_bytes, "UTF-8");
+                    
+                    System.out.println(nick_name + " :ATIVO");
                 }else {
     
                     byte[] nick_sz = new byte[4];
@@ -114,18 +126,17 @@ class SendThread extends Thread {
         Scanner reader = new Scanner(System.in);
         while (true) {
             try {
-                System.out.println("Voce:");
-    
                 String buffer = reader.nextLine();
+                System.out.println("Voce: " + buffer);
 
-                byte[] mensagem;
+                byte[] mensagem = new byte[331];
                 if(buffer.equals("ECHO")) {
-                    mensagem = create_mensage(2, this.nick_user, buffer);
+                    mensagem = create_mensage(2, this.nick_user, "");
                 } else {
                     mensagem = create_mensage(1, this.nick_user, buffer);
                 }
 
-                DatagramPacket request = new DatagramPacket(mensagem, mensagem.length, serverAddr, 6666);
+                DatagramPacket request = new DatagramPacket(mensagem, mensagem.length, serverAddr, 6664);
                 dgramSocket.send(request);
     
             } catch (IOException e) {
